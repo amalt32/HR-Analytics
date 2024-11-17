@@ -1,0 +1,342 @@
+---
+title: "sample"
+author: "Amal Tom"
+date: "2024-11-10"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+options(repos = c(CRAN = "https://cran.rstudio.com"))
+
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## HR Data Analytics
+The below document consist of exploration and analysis of a HR dataset.
+Contains various data exploration methods,visualizations to understand the data in a better way.
+
+## Navigate to the bottom for inferences.
+
+
+
+Loading the dataset
+
+```{r}
+data=read.csv("E:/RCSS/SEM 3/R/hrdata.csv")
+data
+data1=data
+```
+# Data Explorations:-
+
+```{r}
+colnames(data)
+```
+```{r}
+age=unique(data$Age)
+degree=unique(data$Degree)
+degree_100=unique(data$Degree.Percentage)
+experience=unique(data$experience)
+department=unique(data$Department)
+salary=unique(data$Salary)
+
+age
+degree
+degree_100
+experience
+department
+salary
+```
+
+# Finding total salary contribution from each department
+
+```{r}
+dep_salary <- tapply(data$Salary, data$Department, sum)
+dep_salary
+
+```
+# Merging 'marketing' with 'Marketing'
+```{r}
+data1$Department[data1$Department == "marketing"] <- "Marketing"
+dep_salary <- tapply(data1$Salary, data1$Department, sum)
+dep_salary
+
+```
+# Inference 1:Most of the salary is being utilised by the Marketing department
+
+
+#Representing through Bar Plot
+```{r}
+values <- c(A = 10, B = 15, C = 7)
+barplot(dep_salary, main = "Bar Plot Example", xlab = "Categories", ylab = "Counts", col = "skyblue")
+
+```
+
+
+# Number of employees across each departments:-
+```{r}
+# Count occurrences of each unique value in 'Department' column
+dep_count<-table(data1$Department)
+dep_count
+```
+# Inference 2:Most of the employees are under the Marketing department
+
+
+# Average salary of employees across different branches:-
+```{r}
+avg=dep_salary/dep_count
+avg
+```
+# Inference 3:Average salary of employees working under 'Project' department is the highest
+
+
+# Salary Range across different branches:-
+```{r}
+salary_range_by_dept <- tapply(data1$Salary, data1$Department, range)
+print(salary_range_by_dept)
+
+```
+# Inference 4: The Marketing department has the the lowest and highest allotted salary(Range:11000-19000)
+
+
+
+# Converting categorical 'degree' to numerical values-'Degree':-
+```{r}
+data1$degree <- as.numeric(as.factor(data1$Degree))
+Degree<-unique(data1$Degree)
+data1
+```
+`
+
+# Creating correlation matrix, to find dependency between attributes:-
+```{r}
+cor_matrix <- cor(data1[, c("Salary","experience","Degree.Percentage","Year.of.Joining","Age","degree")])
+print(cor_matrix)
+
+```
+
+
+# Heatmap representation of the correlation matrix:-
+```{r}
+install.packages("corrplot")
+library(corrplot)
+corrplot(cor_matrix, 
+         method = "color", 
+         addCoef.col = "black", 
+         number.cex = 0.7, 
+         tl.cex = 0.8, 
+         main = "Correlation Matrix Heatmap (corrplot)")
+
+```
+# Inference 5: Experience has a greater influence on salary compared with other attributes.
+
+
+
+# Finding the age range and number of employees across different departments:- 
+```{r}
+library(dplyr)
+age_range_by_dept <- data1 %>%
+  group_by(Department) %>%
+  summarise(
+    min_age = min(Age, na.rm = TRUE),
+    max_age = max(Age, na.rm = TRUE),
+    mean_age = mean(Age, na.rm = TRUE),
+    median_age = median(Age, na.rm = TRUE),
+    employee_count = n()
+  )
+
+print(age_range_by_dept)
+
+```
+# Inference 6:The employees under Project department are very much senior to the other department employees
+
+
+
+
+```{r}
+project_legal_details <- data1 %>%
+  filter(Department %in% c("Project", "legal","IT"))
+print(project_legal_details)
+
+```
+# Inference 7:- people working under the departments-Project,Legal and IT contributes lesser number of empoyees.
+
+
+
+```{r}
+
+salary_intervals <- cut(data1$Salary, 
+                        breaks = seq(11000, 91000, by = 10000), 
+                        include.lowest = TRUE, 
+                        right = FALSE,   # If you want intervals like [18000, 29000)
+                        labels = c("11k-21k", "21k-31k", "31k-41k", "41k-51k", "51k-61k", "61k-71k", "71k-81k","81k-91k"))
+data1$SalaryInterval <- salary_intervals
+data1
+```
+
+
+
+# Representing Experience with respect to Salary
+```{r}
+plot(data1$experience, data1$Salary,
+     main = "Marketing Experience vs Salary",
+     xlab = "Experience (Years)",
+     ylab = "Salary",
+     pch = 19, col = "blue")
+
+```
+# Inference 8:-Even highest experienced employees have salary range from 11000 to 91000
+
+
+
+# Exploring employees having experience for more than 25 years and below median salary
+```{r}
+library(ggplot2)
+library(dplyr)
+employees_filtered <- data1 %>%
+  filter(experience > 25 & Salary < 45000)
+ggplot(employees_filtered, aes(x = Degree)) +
+  geom_bar(fill = "skyblue") +
+  labs(title = "Employees with >25 years Experience and Salary < 60000 by Degree",
+       x = "Degree",
+       y = "Number of Employees") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  theme_minimal()  
+
+```
+# Inference 9:- Experience doesn't count for Salary hike with lower Educational qualifications like sslc, PDC
+
+
+
+# Grouping employees by SalaryInterval and Experience and their respective counts
+```{r}
+experience_by_salary_interval <- data1 %>%
+  group_by(SalaryInterval, experience,Degree,Degree.Percentage
+) %>%
+  summarise(Count = n(), .groups = "drop")   # .groups = "drop" removes the grouping structure
+
+print(experience_by_salary_interval)
+
+
+```
+
+
+# Number of employees under different Salary scale
+```{r}
+s<-table(experience_by_salary_interval$SalaryInterval)
+s
+```
+# Inference 10:-Most number of employees are having starting salaries.
+# Inference 11:Number of employees decreases as salary increases.
+
+
+
+# Finding the distribution of degree percentage across Salary Scale
+```{r}
+library(dplyr)
+
+experience_degree_summary <- data1 %>%
+  group_by(SalaryInterval, experience, Degree.Percentage) %>%
+  summarise(Count = n(), .groups = "drop")
+print(experience_degree_summary)
+
+ggplot(experience_degree_summary, aes(x = SalaryInterval, y = Count, fill = Degree.Percentage)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Degree Percentage Distribution Across Salary Intervals",
+       x = "Salary Interval",
+       y = "Count of Degree Percentages") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  
+  theme_minimal()
+
+
+```
+# Inference 12:-Employees with lowest degree percentage are having basic Salary(11k-21k)
+# Inference 13: Employees with highest degree percentage has highest salary(81k-91k)
+
+
+# Creating a stacked Bar Chart to observe degree distributions across Salaries
+```{r}
+
+library(ggplot2)
+degree_salary_summary <- data1 %>%
+  group_by(SalaryInterval, Degree) %>%
+  summarise(Count = n(), .groups = "drop")
+print(degree_salary_summary)
+
+ggplot(degree_salary_summary, aes(x = SalaryInterval, y = Count, fill = Degree)) +
+  geom_bar(stat = "identity", position = "stack") +  # Stack bars by Degree
+  labs(title = "Distribution of Degree Types Across Salary Intervals",
+       x = "Salary Interval",
+       y = "Count of Degrees") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate x-axis labels for readability
+  theme_minimal()  # Clean theme
+```
+# Inference 14:-SSLC and PDC degree holders have lowest pay scale
+# Inference 15:-Degree doesn't have a significant relationship with salary
+
+
+```{r}
+experience_by_salary_interval <- data1 %>%
+  group_by(SalaryInterval, experience, Degree, Degree.Percentage) %>%
+  summarise(Count = n(), .groups = "drop")
+print(experience_by_salary_interval)
+
+ggplot(experience_by_salary_interval, aes(x = SalaryInterval, y = Count, fill = experience)) +
+  geom_bar(stat = "identity", position = "stack") +  # Create a stacked bar plot
+  labs(title = "Experience Levels Across Salary Intervals",
+       x = "Salary Interval",
+       y = "Count of Experience Levels") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  
+  theme_minimal()
+
+```
+# Inference 16:-Employees with 30+ year of experience has the highest Salary(81k-91k)
+# Inference 17:-Employees with few years of experience has basic salaries.
+
+
+# INFERENCES:-
+1: Most of the salary is being utilised by the Marketing department(1228000).
+
+2: More than half of the total employees are under the Marketing department-58%.(35 out of 60).
+
+3: Average salary of employees working under 'Project' department is the highest(49666.67).
+
+4: The Marketing department has the lowest and highest allotted salary (Range:11000-19000).
+
+5: Experience has a greater influence on salary compared with other attributes.
+
+6: The employees under Project department are very much senior to the other department employees.
+
+7: People working under the departments-Project, Legal and IT contributes lesser number of         employees(3,1,3).
+
+8: Even highest experienced employees have salary range from 11000 to 91000.
+
+9: Experience doesn't count for Salary hike with lower educational qualifications like SSLC, PDC.
+
+10: Most number of employees are having starting salaries.
+
+11: Number of employees decreases as salary increases.
+
+12: Employees with lowest degree percentage are having basic Salary(11k-21k).
+
+13: Employees with highest degree percentage has highest salary(81k-91k).
+
+14: SSLC and PDC degree holders have lowest pay scale.
+
+15: Degree doesn't have a significant relationship with salary.
+
+16: Employees with 30+ year of experience has the highest salary(81k-91k).
+
+17: Employees with few years of experience has basic salaries.
+
+# Summary
+By analysing the given dataset it is clear that employees with basic degree qualification tends to have increase in Salary as their experience increases.
+
+
+
+
+
